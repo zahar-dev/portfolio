@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rohit Kumar | AI Automation & Full Stack Expert</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #060810;
+      --surface:  #0d1120;
+      --card:     #111827;
+      --border:   #1e2a40;
+      --accent:   #00d4ff;
+      --accent2:  #7c3aed;
+      --accent3:  #10b981;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --glow:     rgba(0,212,255,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── CANVAS BACKGROUND ── */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── CURSOR ── */
+    .cursor {
+      width: 12px; height: 12px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.1s ease;
+      mix-blend-mode: screen;
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1px solid rgba(0,212,255,0.5);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.15s ease, width 0.2s, height 0.2s;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      padding: 18px 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(6,8,16,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem; font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      font-size: 0.85rem; font-weight: 500;
+      color: var(--muted);
+      text-decoration: none; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* ── THEME TOGGLE ── */
+    .theme-toggle {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 6px 14px;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
+      font-size: 0.8rem; font-weight: 600;
+      color: var(--text);
+      transition: border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── LIGHT MODE ── */
+    body.light {
+      --bg:      #f8fafc;
+      --surface: #f1f5f9;
+      --card:    #ffffff;
+      --border:  #e2e8f0;
+      --text:    #0f172a;
+      --muted:   #64748b;
+    }
+    body.light nav {
+      background: rgba(248,250,252,0.92);
+    }
+    body.light #bg-canvas { opacity: 0.25; }
+
+    /* ── SECTIONS ── */
+    section { position: relative; z-index: 1; }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 48px;
+      text-align: center;
+    }
+    .hero-inner { max-width: 860px; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.25);
+      border-radius: 100px;
+      padding: 6px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem; font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.2s ease forwards;
+    }
+    .badge .dot {
+      width: 7px; height: 7px;
+      background: var(--accent3);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    h1 {
+      font-size: clamp(2.6rem, 6vw, 5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.4s ease forwards;
+    }
+    h1 span.grad {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      margin-top: 24px;
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 620px;
+      margin-left: auto; margin-right: auto;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.6s ease forwards;
+    }
+
+    .hero-ctas {
+      margin-top: 40px;
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.8s ease forwards;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; border: none;
+      padding: 14px 32px;
+      border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-2px); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 14px 32px;
+      border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: border-color 0.2s, color 0.2s, transform 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+    .hero-stats {
+      margin-top: 64px;
+      display: flex; gap: 48px; justify-content: center; flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.7s 1s ease forwards;
+    }
+    .stat { text-align: center; }
+    .stat-num {
+      font-size: 2.4rem; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+    }
+    .stat-label { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+    /* ── SECTION HEADER ── */
+    .section-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 48px; }
+    .sec-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 12px;
+    }
+    .sec-title {
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 700; letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+    .sec-sub { color: var(--muted); margin-top: 14px; font-size: 1rem; line-height: 1.7; max-width: 560px; }
+
+    /* ── SKILLS GRID ── */
+    .skills-grid {
+      margin-top: 56px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .skill-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.3s, transform 0.3s;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .skill-card.visible { animation: cardIn 0.5s ease forwards; }
+    .skill-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .skill-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .skill-card:hover::before { opacity: 1; }
+    .skill-icon { font-size: 2rem; margin-bottom: 14px; }
+    .skill-name { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+    .skill-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+    .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem; font-weight: 500;
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.18);
+      color: var(--accent);
+      padding: 3px 10px; border-radius: 4px;
+    }
+
+    /* ── EXPERIENCE ── */
+    #experience { background: var(--surface); }
+    .exp-list { margin-top: 56px; display: flex; flex-direction: column; gap: 24px; }
+    .exp-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 16px;
+      opacity: 0; transform: translateX(-30px);
+      transition: border-color 0.3s;
+    }
+    .exp-card.visible { animation: slideRight 0.5s ease forwards; }
+    .exp-card:hover { border-color: var(--accent2); }
+    .exp-role { font-size: 1.1rem; font-weight: 700; }
+    .exp-company { color: var(--accent); font-weight: 600; margin-top: 4px; }
+    .exp-period {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem; color: var(--muted);
+      white-space: nowrap;
+    }
+    .exp-points { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .exp-point {
+      font-size: 0.85rem; color: var(--muted); line-height: 1.6;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .exp-point::before { content: '▸'; color: var(--accent3); flex-shrink: 0; }
+
+    /* ── TOOLS ── */
+    .tools-section { margin-top: 56px; }
+    .tools-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .tool-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 10px 16px; border-radius: 8px;
+      font-size: 0.82rem; font-weight: 500;
+      transition: border-color 0.2s, color 0.2s, transform 0.2s;
+      cursor: default;
+    }
+    .tool-badge:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+    /* ── PROJECTS ── */
+    .projects-grid {
+      margin-top: 56px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .proj-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+      position: relative; overflow: hidden;
+      opacity: 0; transform: translateY(30px);
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .proj-card.visible { animation: cardIn 0.5s ease forwards; }
+    .proj-card:hover { border-color: var(--accent2); transform: translateY(-4px); }
+    .proj-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; color: var(--accent2); letter-spacing: 0.15em;
+      margin-bottom: 12px;
+    }
+    .proj-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+    .proj-desc { font-size: 0.84rem; color: var(--muted); line-height: 1.65; }
+    .proj-stack { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 20px; }
+    .stack-pill {
+      font-size: 0.7rem;
+      background: rgba(124,58,237,0.12);
+      border: 1px solid rgba(124,58,237,0.25);
+      color: #a78bfa;
+      padding: 3px 10px; border-radius: 4px;
+    }
+
+    /* ── CONTACT ── */
+    #contact { background: var(--surface); }
+    .contact-grid {
+      margin-top: 56px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    .contact-info { display: flex; flex-direction: column; gap: 20px; }
+    .contact-item {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 22px;
+      text-decoration: none; color: var(--text);
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .contact-item:hover { border-color: var(--accent); transform: translateX(4px); }
+    .contact-item-icon { font-size: 1.4rem; }
+    .contact-item-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .contact-item-val { font-size: 0.92rem; font-weight: 600; margin-top: 2px; }
+
+    .hire-box {
+      background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(124,58,237,0.08));
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 14px;
+      padding: 40px;
+      display: flex; flex-direction: column; justify-content: center;
+      text-align: center;
+    }
+    .hire-box h3 { font-size: 1.5rem; font-weight: 700; }
+    .hire-box p { color: var(--muted); margin-top: 12px; line-height: 1.7; font-size: 0.9rem; }
+    .hire-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.8rem; font-weight: 700;
+      color: var(--accent);
+      margin: 24px 0 8px;
+    }
+    .hire-price span { font-size: 1rem; color: var(--muted); }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 40px 48px;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--muted);
+      position: relative; z-index: 1;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideRight {
+      from { opacity: 0; transform: translateX(-30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(1.4); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-8px); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .section-wrap { padding: 70px 20px; }
+      #hero { padding: 0 20px; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .exp-card { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursor-ring"></div>
+
+  <!-- Canvas bg -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">Rohit Kumar</div>
+    <ul class="nav-links">
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#experience">Experience</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-inner">
+      <div class="badge"><span class="dot"></span> Available for Freelance Projects</div>
+      <h1>AI Automation &amp; <span class="grad">Full Stack</span> Expert</h1>
+      <p class="hero-sub">
+        I'm Rohit Kumar — building intelligent automation workflows, AI-powered systems, and scalable web applications that save businesses thousands of hours every year.
+      </p>
+      <div class="hero-ctas">
+        <a href="https://www.upwork.com/freelancers/~0161a95937199edf1a?viewMode=1" target="_blank" class="btn-primary">Hire Me on Upwork ↗</a>
+        <a href="#projects" class="btn-ghost">View Projects</a>
+        <a href="https://drive.google.com/file/d/1CibDf7SMizH3aPjQL0VM_V-ze5uXufPP/view?usp=sharing" class="btn-ghost" id="cv-download-btn">⬇ Download CV</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num" data-target="120">0</div>
+          <div class="stat-label">Projects Delivered</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" data-target="8">0</div>
+          <div class="stat-label">Years Experience</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" data-target="50">0</div>
+          <div class="stat-label">Automation Workflows</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" data-target="8">0</div>
+          <div class="stat-label">Employee of Month Awards</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="section-wrap">
+      <div class="sec-label">What I Do</div>
+      <h2 class="sec-title">Core Expertise</h2>
+      <p class="sec-sub">From intelligent automation to full-stack web apps — I build systems that work while you sleep.</p>
+
+      <div class="skills-grid">
+        <div class="skill-card">
+          <div class="skill-icon">🤖</div>
+          <div class="skill-name">AI Workflow Automation</div>
+          <div class="skill-desc">Design and deploy end-to-end AI-powered workflows using Make.com, n8n, and Zapier connected with OpenAI and Claude AI.</div>
+          <div class="skill-tags">
+            <span class="tag">Make.com</span>
+            <span class="tag">n8n</span>
+            <span class="tag">OpenAI</span>
+            <span class="tag">Claude AI</span>
+          </div>
+        </div>
+        <div class="skill-card">
+          <div class="skill-icon">🔗</div>
+          <div class="skill-name">CRM Automation</div>
+          <div class="skill-desc">Build advanced HubSpot, Airtable & Freshsales automation workflows with complex multi-condition business logic.</div>
+          <div class="skill-tags">
+            <span class="tag">HubSpot</span>
+            <span class="tag">Airtable</span>
+            <span class="tag">Zapier</span>
+          </div>
+        </div>
+        <div class="skill-card">
+          <div class="skill-icon">🛒</div>
+          <div class="skill-name">E-Commerce Solutions</div>
+          <div class="skill-desc">Shopify, WooCommerce & BigCommerce customizations with Stripe, crypto payment integrations, and conversion optimization.</div>
+          <div class="skill-tags">
+            <span class="tag">Shopify</span>
+            <span class="tag">WooCommerce</span>
+            <span class="tag">Stripe</span>
+          </div>
+        </div>
+        <div class="skill-card">
+          <div class="skill-icon">⚡</div>
+          <div class="skill-name">Full Stack Development</div>
+          <div class="skill-desc">Scalable web apps built with PHP, Laravel, Node.js, and React — from API backends to pixel-perfect frontends.</div>
+          <div class="skill-tags">
+            <span class="tag">Laravel</span>
+            <span class="tag">Node.js</span>
+            <span class="tag">MySQL</span>
+          </div>
+        </div>
+        <div class="skill-card">
+          <div class="skill-icon">🧩</div>
+          <div class="skill-name">API Integrations</div>
+          <div class="skill-desc">Connect any app to any service — REST, GraphQL, Webhooks. Shopify, HubSpot, Xero, Cin7, Daily.co, and 30+ more.</div>
+          <div class="skill-tags">
+            <span class="tag">REST API</span>
+            <span class="tag">GraphQL</span>
+            <span class="tag">Webhooks</span>
+          </div>
+        </div>
+        <div class="skill-card">
+          <div class="skill-icon">📊</div>
+          <div class="skill-name">Analytics & Tracking</div>
+          <div class="skill-desc">GA4 custom event tracking, GTM implementation, conversion funnels, and business intelligence dashboards.</div>
+          <div class="skill-tags">
+            <span class="tag">GA4</span>
+            <span class="tag">GTM</span>
+            <span class="tag">Airtable</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tools-section">
+        <div class="sec-label" style="margin-top:60px;">Tech Stack</div>
+        <div class="tools-row">
+          <div class="tool-badge">⚙️ Make.com</div>
+          <div class="tool-badge">🔄 n8n</div>
+          <div class="tool-badge">⚡ Zapier</div>
+          <div class="tool-badge">🤖 OpenAI</div>
+          <div class="tool-badge">🧠 Claude AI</div>
+          <div class="tool-badge">📦 HubSpot</div>
+          <div class="tool-badge">🗂️ Airtable</div>
+          <div class="tool-badge">📋 Monday.com</div>
+          <div class="tool-badge">💳 Stripe</div>
+          <div class="tool-badge">🛍️ Shopify</div>
+          <div class="tool-badge">🌐 BigCommerce</div>
+          <div class="tool-badge">🐘 Laravel</div>
+          <div class="tool-badge">🟩 Node.js</div>
+          <div class="tool-badge">🐘 PHP</div>
+          <div class="tool-badge">🍃 MongoDB</div>
+          <div class="tool-badge">🐬 MySQL</div>
+          <div class="tool-badge">☁️ Supabase</div>
+          <div class="tool-badge">📊 GA4 / GTM</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="experience">
+    <div class="section-wrap">
+      <div class="sec-label">Work History</div>
+      <h2 class="sec-title">Professional Experience</h2>
+      <p class="sec-sub">3+ years building enterprise-grade automation and web solutions across two companies.</p>
+
+      <div class="exp-list">
+        <div class="exp-card">
+          <div>
+            <div class="exp-role">Project Manager · AI Automation Specialist · Full Stack Dev</div>
+            <div class="exp-company">MountCode Technology Pvt. Ltd.</div>
+            <div class="exp-points">
+              <div class="exp-point">Designed AI-powered business automation workflows using Make.com, n8n, Zapier, OpenAI, Claude AI, HubSpot, and Airtable.</div>
+              <div class="exp-point">Built a real-time AI video consultation platform using Daily.co APIs with automated transcription, summaries, and call routing.</div>
+              <div class="exp-point">Developed Stripe payment automation systems with custom checkout flows, webhook processing, and dynamic user redirection.</div>
+              <div class="exp-point">Led technical discovery sessions, project scoping, effort estimation, and delivery across multiple client engagements.</div>
+            </div>
+          </div>
+          <div class="exp-period">June 2025 – Present</div>
+        </div>
+
+        <div class="exp-card">
+          <div>
+            <div class="exp-role">Team Lead · Automation Engineer · Web Developer</div>
+            <div class="exp-company">Baseline I.T. Development Pvt. Ltd.</div>
+            <div class="exp-points">
+              <div class="exp-point">Built email classification + AI auto-response workflows using Make.com + Claude AI, logged to Google Sheets.</div>
+              <div class="exp-point">Worked on BigCommerce projects with GTM, GA4, GraphQL, and Changelly Pay crypto gateway integration.</div>
+              <div class="exp-point">Created CRM automations using HubSpot, Freshsales, Jotform, Zapier — automating contract generation and e-signature flows.</div>
+              <div class="exp-point">Delivered 50+ client projects across AI Automation, CRM, E-commerce, and Full Stack domains. Recognized 8+ times as Employee of the Month.</div>
+            </div>
+          </div>
+          <div class="exp-period">July 2022 – April 2025</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-wrap">
+      <div class="sec-label">Selected Work</div>
+      <h2 class="sec-title">Key Projects</h2>
+      <p class="sec-sub">A snapshot of automation systems and web apps I've built for real clients.</p>
+
+      <div class="projects-grid">
+        <div class="proj-card">
+          <div class="proj-num">PROJECT_01</div>
+          <div class="proj-title">AI Video Consultation Platform</div>
+          <div class="proj-desc">Real-time video platform with Daily.co APIs, automated room creation, call routing, AI transcription, meeting summaries, and professional transfer logic.</div>
+          <div class="proj-stack">
+            <span class="stack-pill">Daily.co API</span>
+            <span class="stack-pill">OpenAI</span>
+            <span class="stack-pill">WordPress</span>
+            <span class="stack-pill">n8n</span>
+          </div>
+        </div>
+        <div class="proj-card">
+          <div class="proj-num">PROJECT_02</div>
+          <div class="proj-title">HubSpot Deal Automation Engine</div>
+          <div class="proj-desc">Advanced n8n workflows for automated deal management, contact lifecycle updates, company status sync, and multi-condition business logic.</div>
+          <div class="proj-stack">
+            <span class="stack-pill">HubSpot API</span>
+            <span class="stack-pill">n8n</span>
+            <span class="stack-pill">Zapier</span>
+          </div>
+        </div>
+        <div class="proj-card">
+          <div class="proj-num">PROJECT_03</div>
+          <div class="proj-title">Stripe Payment Automation System</div>
+          <div class="proj-desc">Custom checkout flows with payment verification, webhook processing, and dynamic user redirection based on transaction outcomes.</div>
+          <div class="proj-stack">
+            <span class="stack-pill">Stripe</span>
+            <span class="stack-pill">Make.com</span>
+            <span class="stack-pill">Supabase</span>
+          </div>
+        </div>
+        <div class="proj-card">
+          <div class="proj-num">PROJECT_04</div>
+          <div class="proj-title">AI Email Processing Workflow</div>
+          <div class="proj-desc">Incoming emails auto-classified and analyzed using Claude AI, logged to Google Sheets, and converted into smart draft responses for review.</div>
+          <div class="proj-stack">
+            <span class="stack-pill">Claude AI</span>
+            <span class="stack-pill">Make.com</span>
+            <span class="stack-pill">Google Sheets</span>
+          </div>
+        </div>
+        <div class="proj-card">
+          <div class="proj-num">PROJECT_05</div>
+          <div class="proj-title">Cin7 + Xero Reporting Dashboard</div>
+          <div class="proj-desc">Combined reporting system with secure admin login — real-time payment summaries, order statuses, and per-customer analytics.</div>
+          <div class="proj-stack">
+            <span class="stack-pill">Cin7 API</span>
+            <span class="stack-pill">Xero API</span>
+            <span class="stack-pill">PHP</span>
+            <span class="stack-pill">MySQL</span>
+          </div>
+        </div>
+        <div class="proj-card">
+          <div class="proj-num">PROJECT_06</div>
+          <div class="proj-title">Shopify AI SEO Blog Automation</div>
+          <div class="proj-desc">Automatically generates SEO-optimized blog content using AI, publishes to Shopify, and automates supporting media workflows without any manual intervention.</div>
+          <div class="proj-stack">
+            <span class="stack-pill">Shopify API</span>
+            <span class="stack-pill">OpenAI</span>
+            <span class="stack-pill">Zapier</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="section-wrap">
+      <div class="sec-label">Let's Work Together</div>
+      <h2 class="sec-title">Get In Touch</h2>
+      <p class="sec-sub">Have a project in mind? I'd love to hear about it and discuss how we can build something great together.</p>
+
+      <div class="contact-grid">
+        <div class="contact-info">
+          <a href="mailto:kumarsoni4994@gmail.com" class="contact-item">
+            <div class="contact-item-icon">✉️</div>
+            <div>
+              <div class="contact-item-label">Email</div>
+              <div class="contact-item-val">kumarsoni4994@gmail.com</div>
+            </div>
+          </a>
+          <a href="tel:+919683001700" class="contact-item">
+            <div class="contact-item-icon">📞</div>
+            <div>
+              <div class="contact-item-label">Phone</div>
+              <div class="contact-item-val">+91 9683001700</div>
+            </div>
+          </a>
+          <a href="https://www.linkedin.com/in/rohit-soni-814964242" target="_blank" class="contact-item">
+            <div class="contact-item-icon">💼</div>
+            <div>
+              <div class="contact-item-label">LinkedIn</div>
+              <div class="contact-item-val">linkedin.com/in/rohit-soni-814964242</div>
+            </div>
+          </a>
+          <div class="contact-item">
+            <div class="contact-item-icon">📍</div>
+            <div>
+              <div class="contact-item-label">Location</div>
+              <div class="contact-item-val">Delhi NCR, India</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hire-box">
+          <h3>Ready to Automate Your Business?</h3>
+          <p>From AI workflows to full-stack apps — let's eliminate manual work and build systems that scale.</p>
+          <div class="hire-price">$8 <span>/ hr on Upwork</span></div>
+          <a href="mailto:kumarsoni4994@gmail.com" class="btn-primary" style="margin-top:8px;">Send Me a Message →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Built with ❤️ by Rohit Kumar &nbsp;·&nbsp; AI Automation &amp; Full Stack Expert &nbsp;·&nbsp; Delhi NCR, India</p>
+  </footer>
+
+  <script>
+    // ── CURSOR ──
+    const cursor = document.getElementById('cursor');
+    const ring   = document.getElementById('cursor-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    (function animCursor(){
+      rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+      cursor.style.left = mx - 6 + 'px'; cursor.style.top = my - 6 + 'px';
+      ring.style.left   = rx - 18 + 'px'; ring.style.top  = ry - 18 + 'px';
+      requestAnimationFrame(animCursor);
+    })();
+
+    // ── CANVAS PARTICLES ──
+    const canvas = document.getElementById('bg-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, particles = [];
+
+    function resize(){
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize(); window.addEventListener('resize', resize);
+
+    class Particle {
+      constructor(){
+        this.x  = Math.random()*W; this.y  = Math.random()*H;
+        this.vx = (Math.random()-0.5)*0.3; this.vy = (Math.random()-0.5)*0.3;
+        this.r  = Math.random()*1.5+0.5;
+        this.a  = Math.random()*0.5+0.1;
+      }
+      update(){ this.x+=this.vx; this.y+=this.vy;
+        if(this.x<0||this.x>W) this.vx*=-1;
+        if(this.y<0||this.y>H) this.vy*=-1;
+      }
+      draw(){
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(0,212,255,${this.a})`; ctx.fill();
+      }
+    }
+
+    for(let i=0;i<100;i++) particles.push(new Particle());
+
+    function drawLines(){
+      for(let i=0;i<particles.length;i++){
+        for(let j=i+1;j<particles.length;j++){
+          const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+          const d=Math.sqrt(dx*dx+dy*dy);
+          if(d<140){
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x,particles[i].y);
+            ctx.lineTo(particles[j].x,particles[j].y);
+            ctx.strokeStyle=`rgba(0,212,255,${0.08*(1-d/140)})`;
+            ctx.lineWidth=0.5; ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animCanvas(){
+      ctx.clearRect(0,0,W,H);
+      particles.forEach(p=>{ p.update(); p.draw(); });
+      drawLines();
+      requestAnimationFrame(animCanvas);
+    }
+    animCanvas();
+
+    // ── COUNTER ANIMATION ──
+    function animateCount(el, target, suffix=''){
+      let start=0, duration=1800, step=Math.ceil(target/60);
+      const id=setInterval(()=>{
+        start+=step;
+        if(start>=target){ el.textContent=target+suffix; clearInterval(id); }
+        else { el.textContent=start+suffix; }
+      },30);
+    }
+    const counters=document.querySelectorAll('[data-target]');
+    const suffixes={120:'+',8:'+',50:'+',8:'+'};
+    let counted=false;
+    const heroObs=new IntersectionObserver(entries=>{
+      if(entries[0].isIntersecting && !counted){
+        counted=true;
+        counters.forEach(c=>{ animateCount(c,+c.dataset.target,'+'); });
+      }
+    },{threshold:0.5});
+    heroObs.observe(document.getElementById('hero'));
+
+    // ── SCROLL REVEAL ──
+    const revealEls=document.querySelectorAll('.skill-card,.exp-card,.proj-card');
+    const obs=new IntersectionObserver(entries=>{
+      entries.forEach((e,i)=>{
+        if(e.isIntersecting){
+          setTimeout(()=>e.target.classList.add('visible'),i*80);
+          obs.unobserve(e.target);
+        }
+      });
+    },{threshold:0.15});
+    revealEls.forEach(el=>obs.observe(el));
+
+    // ── DARK / LIGHT TOGGLE ──
+    let isLight = false;
+    function toggleTheme(){
+      isLight = !isLight;
+      document.body.classList.toggle('light', isLight);
+      const btn = document.getElementById('theme-btn');
+      btn.textContent = isLight ? '🌙 Dark' : '☀️ Light';
+    }
+
+    // ── CV DOWNLOAD ──
+    function downloadCV(e){
+      e.preventDefault();
+      const cvContent = `ROHIT KUMAR
+AI Automation Specialist | Project Manager | Full Stack Developer
+Location: Delhi NCR | Phone: +91 9683001700
+Email: kumarsoni4994@gmail.com
+LinkedIn: https://www.linkedin.com/in/rohit-soni-814964242
+
+PROFESSIONAL SUMMARY
+AI Automation Specialist, Project Manager, and Full Stack Developer with expertise in designing and implementing automation solutions, AI-powered workflows, CRM integrations, and scalable web applications. Experienced with Make.com, n8n, Zapier, Airtable, HubSpot, OpenAI, and Claude AI.
+
+EXPERIENCE
+
+Project Manager | AI Automation Specialist | Full Stack Developer
+MountCode Technology Pvt. Ltd. | June 2025 – Present
+- Designed AI-powered workflows using Make.com, n8n, Zapier, OpenAI, Claude AI, HubSpot, Airtable
+- Built real-time AI video consultation platform using Daily.co APIs with transcription & summaries
+- Developed Stripe payment automation with custom checkout flows and webhook processing
+- Led technical discovery, project scoping, estimation, and delivery across multiple clients
+
+Team Lead | Automation Engineer | Web Developer
+Baseline I.T. Development Pvt. Ltd. | July 2022 – April 2025
+- Built AI email classification workflows using Make.com + Claude AI + Google Sheets
+- BigCommerce projects with GTM, GA4, GraphQL, Changelly Pay crypto gateway
+- CRM automations using HubSpot, Freshsales, Jotform, Zapier
+- Delivered 50+ client projects | Employee of the Month 8+ times
+
+CORE SKILLS
+AI & Automation: OpenAI, Claude AI, Make.com, n8n, Zapier, Airtable
+CRM: HubSpot, Airtable, Go High Level, Freshsales, Monday.com
+Backend: PHP, Laravel, Node.js, Express.js
+Frontend: HTML, CSS, Bootstrap, JavaScript, jQuery
+Databases: MySQL, MongoDB, Supabase
+E-Commerce: Shopify, WooCommerce, BigCommerce, WordPress
+
+ACHIEVEMENTS
+- Employee of the Month 8+ times
+- 50+ client projects delivered
+- 120+ total projects on Upwork
+
+EDUCATION
+Bachelor of Commerce (B.Com) – Kurukshetra University
+Diploma in Computer Software Applications – N.S.T.I, Dehradun
+Diploma in COPA – I.T.I, Hisar`;
+
+      const blob = new Blob([cvContent], { type: 'text/plain' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'Rohit_Kumar_CV.txt';
+      a.click(); URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
